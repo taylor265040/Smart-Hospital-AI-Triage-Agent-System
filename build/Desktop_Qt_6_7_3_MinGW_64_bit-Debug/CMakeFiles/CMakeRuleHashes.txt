@@ -1,0 +1,3 @@
+# Hashes of file build rules.
+abfaa2be4d2952b7c7b4caa2e0b4925d CMakeFiles/hospital-qt_autogen
+3c74b14e385a1fa5deea08f26c11552c hospital-qt_autogen/timestamp
