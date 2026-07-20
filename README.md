@@ -31,97 +31,127 @@
 | 工具 | Lombok |
 
 ---
-### 核心流程图
+## 核心流程图
 
-## **情绪识别与状态更新**
+### 情绪识别与状态更新
+
+```mermaid
+flowchart LR
     A[💬 用户输入] --> B[🛡️ 敏感信息脱敏/过滤]
-    B --> C[😊 情绪识别 (规则)]
+    B --> C["😊 情绪识别 (规则)"]
     C -->|命中规则| D[🌿 更新 Emotion Score]
-    C -->|未命中规则| E[🤖 LLM 情绪识别 (补充调用)]
+    C -->|未命中规则| E["🤖 LLM 情绪识别 (补充调用)"]
     E --> D
-    D --> F[❤️ Emotion State (情绪状态)]
+    D --> F["❤️ Emotion State (情绪状态)"]
+```
 
-## **意图识别与规划决策**
-    A[👤 User Profile (用户画像)] --> E[🧠 Planner (LLM) 意图识别 + 规划决策]
-    B[💬 Recent Chat (最近10轮对话)] --> E
-    C[🗄️ Long Memory (长期记忆)] --> E
-    D[❤️ Emotion State (当前情绪)] --> E
+### 意图识别与规划决策
 
-## **会话结束与后置处理**
+```mermaid
+flowchart LR
+    A["👤 User Profile (用户画像)"] --> E["🧠 Planner (LLM) 意图识别 + 规划决策"]
+    B["💬 Recent Chat (最近10轮对话)"] --> E
+    C["🗄️ Long Memory (长期记忆)"] --> E
+    D["❤️ Emotion State (当前情绪)"] --> E
+```
+
+### 会话结束与后置处理
+
+```mermaid
+flowchart LR
     A[🚩 会话结束] --> B[📄 Conversation Summary 会话摘要]
-    B --> C[🔍 Profile Extractor 画像提取 (候选信息)]
-    C --> D[✅ 用户确认 (可选)]
-    D --> E[👤 更新 User Profile (长期画像更新)]
-    E --> F[❤️ Emotion 衰减 (情绪状态衰减)]
-    F --> G[📖 Skill Learning (技能学习, 可选)]
+    B --> C["🔍 Profile Extractor 画像提取 (候选信息)"]
+    C --> D["✅ 用户确认 (可选)"]
+    D --> E["👤 更新 User Profile (长期画像更新)"]
+    E --> F["❤️ Emotion 衰减 (情绪状态衰减)"]
+    F --> G["📖 Skill Learning (技能学习, 可选)"]
+```
 
-## **具体业务子流程**
-# FAQ 问答流程
-    A[💬 用户输入] --> B[🧠 Planner 输出结果 (Intent=FAQ)]
-    B --> C[🔗 Embedding Router (向量路由)]
+---
+
+## 具体业务子流程
+
+### A. FAQ 问答流程
+
+```mermaid
+flowchart TD
+    A[💬 用户输入] --> B["🧠 Planner 输出结果 (Intent=FAQ)"]
+    B --> C["🔗 Embedding Router (向量路由)"]
     C --> D[选择最相关知识库]
-    D --> E[📖 RAG 检索 (FAQ 知识库)]
-    E --> F[💭 Generator (LLM) 生成自然回复]
+    D --> E["📖 RAG 检索 (FAQ 知识库)"]
+    E --> F["💭 Generator (LLM) 生成自然回复"]
     F --> G[返回用户回复]
+```
 
-# 症状咨询流程 (多轮问诊)
-    A[💬 用户输入] --> B[🧠 Planner (LLM) (Intent=SYMPTOM_INQUIRY)]
-    B --> C[☰ Slot 判断 (症状采集Slot)]
+### B. 症状咨询流程 (多轮问诊)
+
+```mermaid
+flowchart TD
+    A[💬 用户输入] --> B["🧠 Planner (LLM) (Intent=SYMPTOM_INQUIRY)"]
+    B --> C["☰ Slot 判断 (症状采集Slot)"]
     C --> D{信息是否完整?}
-    
-    D -- 否 --> E[💭 Generator (LLM) 生成追问问题 (基于Prompt约束)]
+
+    D -- 否 --> E["💭 Generator (LLM) 生成追问问题 (基于Prompt约束)"]
     E --> F[返回追问问题]
     F --> G[用户继续输入]
     G -.-> A
-    
+
     D -- 是 --> H[🧠 Planner 重新评估]
     H --> I{是否需要挂号?}
-    
-    I -- 否 --> J[📖 症状分析 RAG (疾病/症状知识库)]
-    J --> K[💭 Generator (LLM) 生成专业建议]
+
+    I -- 否 --> J["📖 症状分析 RAG (疾病/症状知识库)"]
+    J --> K["💭 Generator (LLM) 生成专业建议"]
     K --> L[返回用户回复]
-    
-    I -- 是 --> M[🔀 跳转至 C.挂号流程 (预约挂号流程)]
-    
-    I -.->|紧急状况| N[📞 转人工流程 (D.转人工流程)]
 
-# 预约挂号流程
-    A[🧠 Planner (LLM) (Intent=BOOK_APPOINTMENT)] --> B[🛠️ 检查 Booking Tool 是否可用]
+    I -- 是 --> M["🔀 跳转至 C.挂号流程 (预约挂号流程)"]
+
+    I -.->|紧急状况| N["📞 转人工流程 (D.转人工流程)"]
+```
+
+### C. 预约挂号流程
+
+```mermaid
+flowchart TD
+    A["🧠 Planner (LLM) (Intent=BOOK_APPOINTMENT)"] --> B[🛠️ 检查 Booking Tool 是否可用]
     B --> C{Tool 是否正常?}
-    
-    C -- 否 (异常) --> D[📖 进入挂号指引流程 (知识库 RAG)]
-    D --> E[💭 Generator (LLM) 生成挂号指引]
-    E --> F[返回用户回复 (指引信息)]
-    
-    C -- 是 (正常) --> G[1. 科室推荐 (根据症状/需求)]
-    G --> H[2. 医生推荐 (擅长匹配)]
-    H --> I[3. 展示可预约时间 (查询号源)]
-    I --> J[4. 用户选择 (科室/医生/时间)]
-    J --> K[5. 完成预约 (Booking Tool 执行)]
-    K --> L[✅ 预约成功 生成预约凭证]
-    
-    L -->|更改预约| M[📝 更改预约 (修改时间/医生)]
-    L -->|取消预约| N[❌ 取消预约 (取消当前预约)]
-    M -.-> K
 
-# 转人工流程
-    A[🧠 Planner (LLM) (Needs Human=true)] --> B[👥 用户分类 (新老用户/类型)]
-    B --> C[👥 确定客服队列 (按类型分配)]
-    C --> D[⚠️ 评估紧急程度 (情绪/关键词/规则)]
+    C -- "否 (异常)" --> D["📖 进入挂号指引流程 (知识库 RAG)"]
+    D --> E["💭 Generator (LLM) 生成挂号指引"]
+    E --> F["返回用户回复 (指引信息)"]
+
+    C -- "是 (正常)" --> G["1. 科室推荐 (根据症状/需求)"]
+    G --> H["2. 医生推荐 (擅长匹配)"]
+    H --> I["3. 展示可预约时间 (查询号源)"]
+    I --> J["4. 用户选择 (科室/医生/时间)"]
+    J --> K["5. 完成预约 (Booking Tool 执行)"]
+    K --> L[✅ 预约成功 生成预约凭证]
+
+    L -->|更改预约| M["📝 更改预约 (修改时间/医生)"]
+    L -->|取消预约| N["❌ 取消预约 (取消当前预约)"]
+    M -.-> K
+```
+
+### D. 转人工流程
+
+```mermaid
+flowchart TD
+    A["🧠 Planner (LLM) (Needs Human=true)"] --> B["👥 用户分类 (新老用户/类型)"]
+    B --> C["👥 确定客服队列 (按类型分配)"]
+    C --> D["⚠️ 评估紧急程度 (情绪/关键词/规则)"]
     D --> E{队列是否已满?}
-    
+
     E -- 否 --> F[🟢 进入对应队列 正常排队]
     E -- 是 --> G[🔴 分配空闲客服 立即接入]
-    
-    F --> H[🎧 客服接管 (人工会话开始)]
+
+    F --> H["🎧 客服接管 (人工会话开始)"]
     G --> H
-    
-    H --> I[📄 展示信息给客服:]
-    I --> J[• 本轮聊天记录]
-    I --> K[• 用户历史画像]
-    I --> L[• 长期记忆摘要]
-    I --> M[• 情绪状态]
-    
+
+    H --> I["📄 展示信息给客服:"]
+    I --> J["• 本轮聊天记录"]
+    I --> K["• 用户历史画像"]
+    I --> L["• 长期记忆摘要"]
+    I --> M["• 情绪状态"]
+```
 ---
 
 ## 项目结构
@@ -288,10 +318,6 @@ SOURCE seed_data.sql;
 ./mvnw clean package -DskipTests
 java -jar target/HospitalServiceSystem-0.0.1-SNAPSHOT.jar
 ```
-
-### 4. 访问 API 文档
-
-启动后访问 Knife4j 文档：**http://localhost:8080/doc.html**
 
 ---
 
